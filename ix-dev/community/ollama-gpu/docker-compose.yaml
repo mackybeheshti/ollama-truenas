@@ -3,7 +3,7 @@ version: '3.8'
 services:
   ollama:
     image: ollama/ollama:${OLLAMA_IMAGE_TAG:-latest}
-    container_name: ollama
+    container_name: ollama-gpu-gpu
     restart: unless-stopped
     runtime: nvidia
     
@@ -62,7 +62,7 @@ services:
   # Web UI Service
   ollama-webui:
     image: ghcr.io/open-webui/open-webui:main
-    container_name: ollama-webui
+    container_name: ollama-gpu-gpu-webui
     restart: unless-stopped
     
     environment:
@@ -93,7 +93,7 @@ services:
   # GPU Metrics Exporter
   gpu-exporter:
     image: nvidia/dcgm-exporter:3.1.7-3.1.4-ubuntu22.04
-    container_name: ollama-gpu-exporter
+    container_name: ollama-gpu-gpu-gpu-exporter
     restart: unless-stopped
     runtime: nvidia
     
@@ -121,7 +121,7 @@ services:
   # Prometheus for metrics collection
   prometheus:
     image: prom/prometheus:latest
-    container_name: ollama-prometheus
+    container_name: ollama-gpu-gpu-prometheus
     restart: unless-stopped
     
     command:
@@ -153,7 +153,7 @@ services:
   # Grafana Dashboard
   grafana:
     image: grafana/grafana:latest
-    container_name: ollama-grafana
+    container_name: ollama-gpu-gpu-grafana
     restart: unless-stopped
     
     environment:
@@ -185,7 +185,7 @@ services:
   # Model Preloader (runs once on first start)
   model-preloader:
     image: curlimages/curl:latest
-    container_name: ollama-model-preloader
+    container_name: ollama-gpu-gpu-model-preloader
     
     entrypoint: ["/bin/sh", "-c"]
     command: |

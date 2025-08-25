@@ -1,10 +1,10 @@
 # TrueNAS Scale App Configuration for Ollama
 app_version: "0.3.14"
-name: ollama
+name: ollama-gpu
 train: community
 version: "1.0.0"
-description: "Run Large Language Models locally with GPU acceleration"
-title: "Ollama"
+description: "⚠️ BETA TEST VERSION - DO NOT USE IN PRODUCTION ⚠️ - Ollama with GPU acceleration"
+title: "Ollama GPU Enhanced (BETA - TESTING)"
 keywords:
   - ai
   - llm

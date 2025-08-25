@@ -1,5 +1,9 @@
 groups:
-  - name: "Ollama Configuration"
+  - name: "⚠️ WARNING - BETA VERSION ⚠️"
+    description: "This is a BETA test version. Do not use in production!"
+
+# ⚠️ BETA TEST VERSION - NOT FOR PRODUCTION USE ⚠️
+  - name: "Ollama GPU Enhanced Configuration"
     description: "Configure Ollama Server Settings"
   - name: "GPU Configuration"
     description: "Configure GPU Settings and Resource Limits"
@@ -17,8 +21,8 @@ groups:
 questions:
   # Ollama Configuration
   - variable: ollama_image_tag
-    label: "Ollama Version"
-    group: "Ollama Configuration"
+    label: "Ollama GPU Enhanced Version"
+    group: "Ollama GPU Enhanced Configuration"
     schema:
       type: string
       default: "latest"
@@ -34,7 +38,7 @@ questions:
   - variable: default_models
     label: "Default Models to Download"
     description: "Models to automatically download on first install (comma-separated)"
-    group: "Ollama Configuration"
+    group: "Ollama GPU Enhanced Configuration"
     schema:
       type: string
       default: "llama3.2:3b,qwen2.5:7b"
@@ -42,7 +46,7 @@ questions:
   - variable: keep_alive
     label: "Model Keep Alive Duration"
     description: "How long to keep models loaded in memory (e.g., 5m, 1h, 24h)"
-    group: "Ollama Configuration"
+    group: "Ollama GPU Enhanced Configuration"
     schema:
       type: string
       default: "5m"
@@ -51,7 +55,7 @@ questions:
   - variable: max_loaded_models
     label: "Maximum Loaded Models"
     description: "Maximum number of models to keep loaded simultaneously"
-    group: "Ollama Configuration"
+    group: "Ollama GPU Enhanced Configuration"
     schema:
       type: int
       default: 2

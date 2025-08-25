@@ -4,7 +4,7 @@
   "app_version": "0.3.14",
   "human_version": "0.3.14_1.0.0",
   "minContainerImage": "img.png",
-  "description": "Ollama - Run Large Language Models locally",
+  "description": "Ollama GPU Enhanced - Run Large Language Models locally",
   "changelog": {
     "1.0.0": {
       "date": "2024-12-25",
