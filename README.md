@@ -47,7 +47,7 @@ The Tesla P40 is an excellent choice for AI inference with its 24GB VRAM, but no
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ollama-truenas.git
+git clone https://github.com/mackybeheshti/ollama-truenas.git
 cd ollama-truenas
 
 # Run setup script
@@ -161,7 +161,7 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/ollama-truenas/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/ollama-truenas/discussions)
-- **Wiki**: [Project Wiki](https://github.com/yourusername/ollama-truenas/wiki)
+- **Issues**: [GitHub Issues](https://github.com/mackybeheshti/ollama-truenas/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/mackybeheshti/ollama-truenas/discussions)
+- **Wiki**: [Project Wiki](https://github.com/mackybeheshti/ollama-truenas/wiki)
 # test write by macky
