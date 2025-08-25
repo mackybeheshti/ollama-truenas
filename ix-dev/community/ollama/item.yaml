@@ -1,0 +1,7 @@
+# TrueNAS Scale App Catalog Item Definition
+categories:
+  - ai
+  - productivity
+icon_url: https://raw.githubusercontent.com/mackybeheshti/ollama-truenas/main/ix-dev/community/ollama/icon.png
+name: ollama
+train: community

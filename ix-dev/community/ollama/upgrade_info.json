@@ -1,0 +1,20 @@
+{
+  "filename": "upgrade_info.json",
+  "version": "1.0.0",
+  "app_version": "0.3.14",
+  "human_version": "0.3.14_1.0.0",
+  "minContainerImage": "img.png",
+  "description": "Ollama - Run Large Language Models locally",
+  "changelog": {
+    "1.0.0": {
+      "date": "2024-12-25",
+      "changes": [
+        "Initial TrueNAS Scale release",
+        "Full GPU support with monitoring",
+        "Web UI integration",
+        "Prometheus and Grafana dashboards",
+        "Model management interface"
+      ]
+    }
+  }
+}

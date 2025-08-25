@@ -1,0 +1,147 @@
+# Default values for Ollama TrueNAS Scale App
+
+# Image configuration
+image:
+  repository: ollama/ollama
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Ollama configuration
+ollama:
+  # API Configuration
+  api:
+    host: "0.0.0.0"
+    port: 11434
+  
+  # Model settings
+  models:
+    keepAlive: "5m"
+    maxLoaded: 2
+    defaultModels: "llama3.2:3b"
+  
+  # Performance settings
+  performance:
+    numParallel: 4
+    maxQueue: 512
+    timeout: 120
+    numThread: 0
+    gpuLayers: 99
+
+# GPU Configuration
+gpu:
+  enabled: true
+  device: "0"
+  vramLimit: 0  # 0 = no limit
+  driverCapabilities: "compute,utility"
+  computeCapability: ""
+
+# Web UI Configuration
+webui:
+  enabled: true
+  image:
+    repository: ghcr.io/open-webui/open-webui
+    tag: main
+  port: 8080
+  auth: false
+
+# Monitoring Configuration
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    port: 9090
+  grafana:
+    enabled: false
+    port: 3000
+    adminPassword: "admin"
+  gpuExporter:
+    enabled: true
+    image:
+      repository: nvidia/dcgm-exporter
+      tag: 3.1.7-3.1.4-ubuntu22.04
+    port: 9400
+
+# Storage Configuration
+storage:
+  models:
+    type: hostPath
+    hostPath: "/mnt/pool/ollama/models"
+    size: "100Gi"
+  config:
+    type: hostPath
+    hostPath: "/mnt/pool/ollama/config"
+    size: "10Gi"
+  cache:
+    type: emptyDir
+    size: "10Gi"
+
+# Network Configuration
+network:
+  hostNetwork: false
+  api:
+    type: ClusterIP
+    port: 11434
+  webui:
+    type: ClusterIP
+    port: 8080
+
+# Resource Limits
+resources:
+  limits:
+    cpu: "0"  # 0 = unlimited
+    memory: "16Gi"
+    nvidia.com/gpu: 1
+  requests:
+    cpu: "2"
+    memory: "8Gi"
+    nvidia.com/gpu: 1
+
+# Security Context
+securityContext:
+  runAsUser: 568
+  runAsGroup: 568
+  fsGroup: 568
+
+# Service Account
+serviceAccount:
+  create: true
+  name: ""
+
+# Portal Configuration
+portal:
+  enabled: true
+  host: ""
+  port: 8080
+  protocol: "http"
+  path: "/"
+
+# Health Checks
+healthcheck:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# Update Strategy
+updateStrategy:
+  type: Recreate
+
+# Extra Environment Variables
+extraEnvVars: []
+
+# Node Selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}

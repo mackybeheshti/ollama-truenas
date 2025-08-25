@@ -1,0 +1,78 @@
+# TrueNAS Scale Base Template Library
+# This provides helper functions for the app configuration
+
+groups:
+  - name: "Container Images"
+    description: "Configure container images"
+  - name: "Workload Configuration"
+    description: "Configure workload settings"
+
+portals: {}
+
+questions:
+  - variable: global
+    label: "Global Settings"
+    group: "Workload Configuration"
+    schema:
+      additional_attrs: true
+      type: dict
+      attrs:
+        - variable: ixChartContext
+          label: "Chart Context"
+          schema:
+            additional_attrs: true
+            type: dict
+            attrs:
+              - variable: addNvidiaRuntimeClass
+                label: "Add NVIDIA Runtime Class"
+                schema:
+                  type: boolean
+                  default: true
+                  hidden: true
+              - variable: isInstall
+                label: "Is Install"
+                schema:
+                  type: boolean
+                  default: true
+                  hidden: true
+              - variable: isUpgrade
+                label: "Is Upgrade"
+                schema:
+                  type: boolean
+                  default: false
+                  hidden: true
+              - variable: kubernetes_config
+                label: "Kubernetes Config"
+                schema:
+                  type: dict
+                  hidden: true
+                  attrs:
+                    - variable: cluster_cidr
+                      label: "Cluster CIDR"
+                      schema:
+                        type: string
+                        default: "172.16.0.0/16"
+                        hidden: true
+                    - variable: service_cidr
+                      label: "Service CIDR"
+                      schema:
+                        type: string
+                        default: "172.17.0.0/16"
+                        hidden: true
+              - variable: operation
+                label: "Operation"
+                schema:
+                  type: string
+                  default: "INSTALL"
+                  hidden: true
+                  enum:
+                    - value: "INSTALL"
+                      description: "Install"
+                    - value: "UPGRADE"
+                      description: "Upgrade"
+        - variable: namespace
+          label: "Namespace"
+          schema:
+            type: string
+            default: "ix-ollama"
+            hidden: true
