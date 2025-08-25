@@ -1,0 +1,153 @@
+# GPU Alert Rules for Ollama TrueNAS App
+groups:
+  - name: gpu_alerts
+    interval: 30s
+    rules:
+      # High GPU Temperature Alert (Critical for P40 with passive cooling)
+      - alert: HighGPUTemperature
+        expr: DCGM_FI_DEV_GPU_TEMP > 83
+        for: 1m
+        labels:
+          severity: critical
+          component: gpu
+        annotations:
+          summary: "GPU temperature critical on {{ $labels.instance }}"
+          description: "GPU {{ $labels.gpu }} temperature is {{ $value }}°C (threshold: 83°C). P40 requires immediate cooling attention!"
+
+      # GPU Temperature Warning
+      - alert: GPUTemperatureWarning
+        expr: DCGM_FI_DEV_GPU_TEMP > 78
+        for: 2m
+        labels:
+          severity: warning
+          component: gpu
+        annotations:
+          summary: "GPU temperature warning on {{ $labels.instance }}"
+          description: "GPU {{ $labels.gpu }} temperature is {{ $value }}°C. Consider improving airflow."
+
+      # High VRAM Usage
+      - alert: HighVRAMUsage
+        expr: (DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_TOTAL) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          component: gpu
+        annotations:
+          summary: "High VRAM usage on {{ $labels.instance }}"
+          description: "GPU {{ $labels.gpu }} VRAM usage is {{ $value | humanizePercentage }}. Consider unloading unused models."
+
+      # GPU Utilization Stuck at 100%
+      - alert: GPUStuck
+        expr: DCGM_FI_DEV_GPU_UTIL == 100
+        for: 10m
+        labels:
+          severity: warning
+          component: gpu
+        annotations:
+          summary: "GPU stuck at 100% utilization"
+          description: "GPU {{ $labels.gpu }} has been at 100% utilization for 10 minutes. Check for stuck processes."
+
+      # GPU Power Draw Excessive (P40 TDP is 250W)
+      - alert: HighGPUPowerDraw
+        expr: DCGM_FI_DEV_POWER_USAGE > 275
+        for: 2m
+        labels:
+          severity: warning
+          component: gpu
+        annotations:
+          summary: "High GPU power draw on {{ $labels.instance }}"
+          description: "GPU {{ $labels.gpu }} is drawing {{ $value }}W (normal max: 250W)"
+
+      # GPU ECC Errors (if supported)
+      - alert: GPUECCErrors
+        expr: rate(DCGM_FI_DEV_ECC_DBE_VOL_TOTAL[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: gpu
+        annotations:
+          summary: "GPU ECC errors detected"
+          description: "GPU {{ $labels.gpu }} is experiencing ECC errors. This may indicate hardware issues."
+
+  - name: ollama_alerts
+    interval: 30s
+    rules:
+      # Ollama Service Down
+      - alert: OllamaDown
+        expr: up{job="ollama"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: ollama
+        annotations:
+          summary: "Ollama service is down"
+          description: "Ollama API endpoint has been unreachable for 1 minute"
+
+      # High Response Time
+      - alert: OllamaHighResponseTime
+        expr: histogram_quantile(0.95, rate(ollama_request_duration_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+          component: ollama
+        annotations:
+          summary: "Ollama high response time"
+          description: "95th percentile response time is {{ $value }}s (threshold: 30s)"
+
+      # Model Loading Failed
+      - alert: ModelLoadingFailed
+        expr: increase(ollama_model_load_failures_total[5m]) > 3
+        for: 1m
+        labels:
+          severity: warning
+          component: ollama
+        annotations:
+          summary: "Model loading failures detected"
+          description: "{{ $value }} model loading failures in the last 5 minutes"
+
+      # Queue Backlog
+      - alert: OllamaQueueBacklog
+        expr: ollama_queue_size > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: ollama
+        annotations:
+          summary: "Large Ollama request queue"
+          description: "Request queue size is {{ $value }}. System may be overloaded."
+
+  - name: system_alerts
+    interval: 30s
+    rules:
+      # Container Restart
+      - alert: ContainerRestarting
+        expr: rate(container_restart_count[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: container
+        annotations:
+          summary: "Container {{ $labels.container_name }} is restarting"
+          description: "Container has restarted {{ $value }} times in the last 5 minutes"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes{container_name=~".*ollama.*"} / container_spec_memory_limit_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          component: memory
+        annotations:
+          summary: "High memory usage in {{ $labels.container_name }}"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+      # Disk Space Low
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/models"} / node_filesystem_size_bytes{mountpoint="/models"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: warning
+          component: storage
+        annotations:
+          summary: "Low disk space for models"
+          description: "Only {{ $value | humanizePercentage }} disk space remaining for model storage"

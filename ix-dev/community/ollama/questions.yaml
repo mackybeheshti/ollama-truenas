@@ -1,0 +1,396 @@
+groups:
+  - name: "Ollama Configuration"
+    description: "Configure Ollama Server Settings"
+  - name: "GPU Configuration"
+    description: "Configure GPU Settings and Resource Limits"
+  - name: "Network Configuration"
+    description: "Configure Network and API Settings"
+  - name: "Storage Configuration"
+    description: "Configure Storage Paths"
+  - name: "Monitoring Configuration"
+    description: "Configure Monitoring and Metrics"
+  - name: "Advanced Configuration"
+    description: "Advanced Settings"
+  - name: "Resource Limits"
+    description: "Configure Resource Limits"
+
+questions:
+  # Ollama Configuration
+  - variable: ollama_image_tag
+    label: "Ollama Version"
+    group: "Ollama Configuration"
+    schema:
+      type: string
+      default: "latest"
+      enum:
+        - value: "latest"
+          description: "Latest stable version"
+        - value: "0.3.14"
+          description: "Version 0.3.14"
+        - value: "0.3.13"
+          description: "Version 0.3.13"
+      required: true
+
+  - variable: default_models
+    label: "Default Models to Download"
+    description: "Models to automatically download on first install (comma-separated)"
+    group: "Ollama Configuration"
+    schema:
+      type: string
+      default: "llama3.2:3b,qwen2.5:7b"
+
+  - variable: keep_alive
+    label: "Model Keep Alive Duration"
+    description: "How long to keep models loaded in memory (e.g., 5m, 1h, 24h)"
+    group: "Ollama Configuration"
+    schema:
+      type: string
+      default: "5m"
+      required: true
+
+  - variable: max_loaded_models
+    label: "Maximum Loaded Models"
+    description: "Maximum number of models to keep loaded simultaneously"
+    group: "Ollama Configuration"
+    schema:
+      type: int
+      default: 2
+      min: 1
+      max: 10
+
+  # GPU Configuration
+  - variable: enable_gpu
+    label: "Enable GPU Support"
+    description: "Enable NVIDIA GPU acceleration"
+    group: "GPU Configuration"
+    schema:
+      type: boolean
+      default: true
+
+  - variable: gpu_device
+    label: "GPU Device"
+    description: "NVIDIA GPU device index (0 for first GPU)"
+    group: "GPU Configuration"
+    schema:
+      type: string
+      default: "0"
+      show_if: [["enable_gpu", "=", true]]
+      enum:
+        - value: "0"
+          description: "GPU 0"
+        - value: "1"
+          description: "GPU 1"
+        - value: "all"
+          description: "All GPUs"
+
+  - variable: vram_limit
+    label: "VRAM Limit per Model (GB)"
+    description: "Maximum VRAM allocation per model (0 = no limit)"
+    group: "GPU Configuration"
+    schema:
+      type: int
+      default: 20
+      min: 0
+      max: 24
+      show_if: [["enable_gpu", "=", true]]
+
+  - variable: gpu_compute_capability
+    label: "CUDA Compute Capability"
+    description: "Override CUDA compute capability (leave empty for auto-detect)"
+    group: "GPU Configuration"
+    schema:
+      type: string
+      default: ""
+      show_if: [["enable_gpu", "=", true]]
+
+  - variable: nvidia_driver_capabilities
+    label: "NVIDIA Driver Capabilities"
+    description: "NVIDIA container runtime capabilities"
+    group: "GPU Configuration"
+    schema:
+      type: string
+      default: "compute,utility"
+      show_if: [["enable_gpu", "=", true]]
+
+  # Network Configuration
+  - variable: api_port
+    label: "API Port"
+    description: "Port for Ollama API"
+    group: "Network Configuration"
+    schema:
+      type: int
+      default: 11434
+      min: 1024
+      max: 65535
+      required: true
+
+  - variable: host_network
+    label: "Use Host Network"
+    description: "Use host network mode (required for GPU sharing with other apps)"
+    group: "Network Configuration"
+    schema:
+      type: boolean
+      default: false
+
+  - variable: api_host
+    label: "API Listen Address"
+    description: "API listen address (0.0.0.0 for all interfaces)"
+    group: "Network Configuration"
+    schema:
+      type: string
+      default: "0.0.0.0"
+
+  - variable: enable_cors
+    label: "Enable CORS"
+    description: "Enable Cross-Origin Resource Sharing for web apps"
+    group: "Network Configuration"
+    schema:
+      type: boolean
+      default: true
+
+  - variable: cors_origins
+    label: "CORS Allowed Origins"
+    description: "Comma-separated list of allowed origins (* for all)"
+    group: "Network Configuration"
+    schema:
+      type: string
+      default: "*"
+      show_if: [["enable_cors", "=", true]]
+
+  - variable: enable_auth
+    label: "Enable API Authentication"
+    description: "Require API key for access"
+    group: "Network Configuration"
+    schema:
+      type: boolean
+      default: false
+
+  - variable: api_key
+    label: "API Key"
+    description: "API key for authentication (auto-generated if empty)"
+    group: "Network Configuration"
+    schema:
+      type: string
+      default: ""
+      private: true
+      show_if: [["enable_auth", "=", true]]
+
+  # Storage Configuration
+  - variable: models_path
+    label: "Models Storage Path"
+    description: "Path to store downloaded models"
+    group: "Storage Configuration"
+    schema:
+      type: hostpath
+      required: true
+
+  - variable: config_path
+    label: "Configuration Storage Path"
+    description: "Path to store Ollama configuration"
+    group: "Storage Configuration"
+    schema:
+      type: hostpath
+      required: true
+
+  - variable: cache_path
+    label: "Cache Storage Path"
+    description: "Path for temporary cache files"
+    group: "Storage Configuration"
+    schema:
+      type: hostpath
+      required: true
+
+  # Monitoring Configuration
+  - variable: enable_monitoring
+    label: "Enable Monitoring"
+    description: "Enable GPU and performance monitoring"
+    group: "Monitoring Configuration"
+    schema:
+      type: boolean
+      default: true
+
+  - variable: enable_web_ui
+    label: "Enable Web UI"
+    description: "Enable web-based model management UI"
+    group: "Monitoring Configuration"
+    schema:
+      type: boolean
+      default: true
+
+  - variable: web_ui_port
+    label: "Web UI Port"
+    description: "Port for web management interface"
+    group: "Monitoring Configuration"
+    schema:
+      type: int
+      default: 8080
+      min: 1024
+      max: 65535
+      show_if: [["enable_web_ui", "=", true]]
+
+  - variable: enable_gpu_exporter
+    label: "Enable GPU Metrics Exporter"
+    description: "Enable Prometheus GPU metrics exporter"
+    group: "Monitoring Configuration"
+    schema:
+      type: boolean
+      default: true
+      show_if: [["enable_monitoring", "=", true]]
+
+  - variable: metrics_port
+    label: "Metrics Port"
+    description: "Port for Prometheus metrics"
+    group: "Monitoring Configuration"
+    schema:
+      type: int
+      default: 9090
+      min: 1024
+      max: 65535
+      show_if: [["enable_gpu_exporter", "=", true]]
+
+  - variable: enable_grafana
+    label: "Enable Grafana Dashboard"
+    description: "Enable Grafana for visualization"
+    group: "Monitoring Configuration"
+    schema:
+      type: boolean
+      default: false
+      show_if: [["enable_monitoring", "=", true]]
+
+  - variable: grafana_port
+    label: "Grafana Port"
+    description: "Port for Grafana dashboard"
+    group: "Monitoring Configuration"
+    schema:
+      type: int
+      default: 3000
+      min: 1024
+      max: 65535
+      show_if: [["enable_grafana", "=", true]]
+
+  # Advanced Configuration
+  - variable: num_parallel
+    label: "Parallel Request Limit"
+    description: "Maximum number of parallel requests"
+    group: "Advanced Configuration"
+    schema:
+      type: int
+      default: 4
+      min: 1
+      max: 16
+
+  - variable: max_queue
+    label: "Maximum Queue Size"
+    description: "Maximum number of queued requests"
+    group: "Advanced Configuration"
+    schema:
+      type: int
+      default: 512
+      min: 1
+      max: 2048
+
+  - variable: timeout
+    label: "Request Timeout (seconds)"
+    description: "Maximum time for a single request"
+    group: "Advanced Configuration"
+    schema:
+      type: int
+      default: 120
+      min: 30
+      max: 3600
+
+  - variable: debug_mode
+    label: "Debug Mode"
+    description: "Enable debug logging"
+    group: "Advanced Configuration"
+    schema:
+      type: boolean
+      default: false
+
+  - variable: gpu_layers
+    label: "GPU Layers"
+    description: "Number of layers to offload to GPU (0 = auto)"
+    group: "Advanced Configuration"
+    schema:
+      type: int
+      default: 0
+      min: 0
+      max: 128
+      show_if: [["enable_gpu", "=", true]]
+
+  - variable: cpu_threads
+    label: "CPU Threads"
+    description: "Number of CPU threads to use (0 = auto)"
+    group: "Advanced Configuration"
+    schema:
+      type: int
+      default: 0
+      min: 0
+      max: 128
+
+  # Resource Limits
+  - variable: cpu_limit
+    label: "CPU Limit"
+    description: "Maximum CPU cores (0 = unlimited)"
+    group: "Resource Limits"
+    schema:
+      type: string
+      default: "0"
+
+  - variable: memory_limit
+    label: "Memory Limit"
+    description: "Maximum memory allocation"
+    group: "Resource Limits"
+    schema:
+      type: string
+      default: "16Gi"
+
+  - variable: enable_resource_reservation
+    label: "Enable Resource Reservation"
+    description: "Reserve resources for Ollama"
+    group: "Resource Limits"
+    schema:
+      type: boolean
+      default: false
+
+  - variable: cpu_reservation
+    label: "CPU Reservation"
+    description: "Reserved CPU cores"
+    group: "Resource Limits"
+    schema:
+      type: string
+      default: "2"
+      show_if: [["enable_resource_reservation", "=", true]]
+
+  - variable: memory_reservation
+    label: "Memory Reservation"
+    description: "Reserved memory"
+    group: "Resource Limits"
+    schema:
+      type: string
+      default: "8Gi"
+      show_if: [["enable_resource_reservation", "=", true]]
+
+  - variable: extra_env_vars
+    label: "Extra Environment Variables"
+    description: "Additional environment variables"
+    group: "Advanced Configuration"
+    schema:
+      type: list
+      default: []
+      items:
+        - variable: env_var
+          label: "Environment Variable"
+          schema:
+            type: dict
+            attrs:
+              - variable: name
+                label: "Name"
+                schema:
+                  type: string
+                  required: true
+              - variable: value
+                label: "Value"
+                schema:
+                  type: string
+                  required: true

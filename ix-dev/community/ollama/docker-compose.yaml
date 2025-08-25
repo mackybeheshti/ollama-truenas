@@ -1,0 +1,233 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:${OLLAMA_IMAGE_TAG:-latest}
+    container_name: ollama
+    restart: unless-stopped
+    runtime: nvidia
+    
+    environment:
+      - OLLAMA_HOST=${API_HOST:-0.0.0.0}
+      - OLLAMA_PORT=${API_PORT:-11434}
+      - OLLAMA_MODELS=/models
+      - OLLAMA_KEEP_ALIVE=${KEEP_ALIVE:-5m}
+      - OLLAMA_NUM_PARALLEL=${NUM_PARALLEL:-4}
+      - OLLAMA_MAX_QUEUE=${MAX_QUEUE:-512}
+      - OLLAMA_TIMEOUT=${TIMEOUT:-120}
+      - OLLAMA_DEBUG=${DEBUG_MODE:-false}
+      - OLLAMA_MAX_LOADED_MODELS=${MAX_LOADED_MODELS:-2}
+      - OLLAMA_GPU_LAYERS=${GPU_LAYERS:-0}
+      - OLLAMA_NUM_THREAD=${CPU_THREADS:-0}
+      - NVIDIA_VISIBLE_DEVICES=${GPU_DEVICE:-0}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
+      - CUDA_DEVICE_ORDER=PCI_BUS_ID
+      
+    ports:
+      - "${API_PORT:-11434}:11434"
+      
+    volumes:
+      - ${MODELS_PATH}:/models
+      - ${CONFIG_PATH}:/root/.ollama
+      - ${CACHE_PATH}:/tmp/ollama
+      
+    deploy:
+      resources:
+        limits:
+          cpus: '${CPU_LIMIT:-0}'
+          memory: ${MEMORY_LIMIT:-16Gi}
+        reservations:
+          cpus: '${CPU_RESERVATION:-2}'
+          memory: ${MEMORY_RESERVATION:-8Gi}
+          devices:
+            - driver: nvidia
+              count: ${GPU_COUNT:-1}
+              capabilities: [gpu]
+              
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      
+    networks:
+      - ollama-network
+      
+    labels:
+      - "com.ollama.description=Ollama LLM Server"
+      - "com.ollama.gpu.enabled=${ENABLE_GPU:-true}"
+      - "com.ollama.monitoring.enabled=${ENABLE_MONITORING:-true}"
+
+  # Web UI Service
+  ollama-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: ollama-webui
+    restart: unless-stopped
+    
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_AUTH=${ENABLE_AUTH:-false}
+      - WEBUI_SECRET_KEY=${API_KEY:-}
+      - ENABLE_SIGNUP=false
+      - DEFAULT_MODELS=${DEFAULT_MODELS:-llama3.2:3b,qwen2.5:7b}
+      
+    ports:
+      - "${WEB_UI_PORT:-8080}:8080"
+      
+    volumes:
+      - ${CONFIG_PATH}/webui:/app/backend/data
+      
+    depends_on:
+      - ollama
+      
+    networks:
+      - ollama-network
+      
+    profiles:
+      - webui
+      
+    labels:
+      - "com.ollama.webui=true"
+
+  # GPU Metrics Exporter
+  gpu-exporter:
+    image: nvidia/dcgm-exporter:3.1.7-3.1.4-ubuntu22.04
+    container_name: ollama-gpu-exporter
+    restart: unless-stopped
+    runtime: nvidia
+    
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=${GPU_DEVICE:-0}
+      - NVIDIA_DRIVER_CAPABILITIES=utility
+      - DCGM_EXPORTER_NO_HOSTNAME=1
+      - DCGM_EXPORTER_INTERVAL=5000
+      
+    ports:
+      - "${METRICS_PORT:-9090}:9400"
+      
+    cap_add:
+      - SYS_ADMIN
+      
+    networks:
+      - ollama-network
+      
+    profiles:
+      - monitoring
+      
+    labels:
+      - "com.ollama.monitoring.gpu=true"
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ollama-prometheus
+    restart: unless-stopped
+    
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+      
+    ports:
+      - "9091:9090"
+      
+    networks:
+      - ollama-network
+      
+    profiles:
+      - monitoring
+      
+    depends_on:
+      - gpu-exporter
+      
+    labels:
+      - "com.ollama.monitoring.prometheus=true"
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ollama-grafana
+    restart: unless-stopped
+    
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_SERVER_ROOT_URL=http://localhost:${GRAFANA_PORT:-3000}
+      
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+      
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+      
+    networks:
+      - ollama-network
+      
+    profiles:
+      - grafana
+      
+    depends_on:
+      - prometheus
+      
+    labels:
+      - "com.ollama.monitoring.grafana=true"
+
+  # Model Preloader (runs once on first start)
+  model-preloader:
+    image: curlimages/curl:latest
+    container_name: ollama-model-preloader
+    
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+      echo 'Waiting for Ollama to be ready...'
+      until curl -f http://ollama:11434/ > /dev/null 2>&1; do
+        sleep 5
+      done
+      echo 'Ollama is ready. Downloading default models...'
+      
+      IFS=',' read -ra MODELS <<< \"${DEFAULT_MODELS:-llama3.2:3b,qwen2.5:7b}\"
+      for model in \"\$${MODELS[@]}\"; do
+        model=\$$(echo \$$model | tr -d ' ')
+        echo \"Pulling model: \$$model\"
+        curl -X POST http://ollama:11434/api/pull -d \"{\\\"name\\\":\\\"\$$model\\\"}\"
+        echo \"Model \$$model pulled successfully\"
+      done
+      
+      echo 'All default models downloaded successfully!'
+      "
+      
+    networks:
+      - ollama-network
+      
+    depends_on:
+      - ollama
+      
+    profiles:
+      - init
+      
+    labels:
+      - "com.ollama.init.preloader=true"
+
+networks:
+  ollama-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

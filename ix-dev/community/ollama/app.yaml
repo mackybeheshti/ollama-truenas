@@ -1,0 +1,52 @@
+# TrueNAS Scale App Configuration for Ollama
+app_version: "0.3.14"
+name: ollama
+train: community
+version: "1.0.0"
+description: "Run Large Language Models locally with GPU acceleration"
+title: "Ollama"
+keywords:
+  - ai
+  - llm
+  - machine-learning
+  - gpu
+  - nvidia
+  - inference
+  - ollama
+  - language-model
+home: https://ollama.ai
+sources:
+  - https://github.com/ollama/ollama
+  - https://github.com/yourusername/ollama-truenas
+maintainers:
+  - name: "Your Name"
+    email: "your.email@example.com"
+    url: "https://github.com/yourusername"
+run_as_context:
+  - description: "Ollama GPU-Accelerated LLM Server"
+    gid: 568
+    group_name: apps
+    uid: 568
+    user_name: apps
+icon_url: https://raw.githubusercontent.com/ollama/ollama/main/app/assets/icon.png
+screenshots:
+  - https://raw.githubusercontent.com/yourusername/ollama-truenas/main/docs/images/dashboard.png
+  - https://raw.githubusercontent.com/yourusername/ollama-truenas/main/docs/images/models.png
+categories:
+  - ai
+  - productivity
+  - tools
+notes: |
+  Ollama TrueNAS Scale App with GPU Support
+  
+  This app provides:
+  - Full NVIDIA GPU acceleration support
+  - Web UI for model management
+  - GPU monitoring dashboard
+  - Persistent model storage
+  - API access for integrations
+  
+  Tesla P40 Users: Note that P40 lacks NVENC for video encoding.
+  Ensure adequate cooling as P40 uses passive cooling.
+lib_version: "1.0.0"
+lib_version_hash: "1.0.0_community"
